@@ -1,6 +1,41 @@
 <h1>Campaigns list</h1>
 
-below is the response
+This prints out the keys <br>
 
-    <%= @campaign_criterion %>
- 
+    <% @campaign_criterion.each_key do |key| %>
+    <%= key %>
+    <% end %> <br> 
+    <br> 
+This prints out the contents for a specific key <br>
+    <%= @campaign_criterion[90823468]  %> <br><br>
+This prints out the contents for the first part of the array for that specific key
+    <br>
+This is the name of the platform <br>
+    <%= @campaign_criterion[90823468][1][:platform_name]  %> <br><br>
+    <br>
+    Everything platform associated with this key 90823468 <br>
+    <% @campaign_criterion[90823468].each do |n|  %>
+    <%= n[:platform_name] %><br> 
+    <%end%><br>
+    <br>
+    This prints out the platforms the campaigns are targeting<br>
+    <br>
+    <% @campaign_criterion.each_key do |campaignId| %>
+    <%=campaignId %><br>
+    <% @campaign_criterion[campaignId].each do |y| %>
+    <%= y[:platform_name] %><br> 
+    <% end %><br>
+    <% end %> <br>
+    <br>
+    Check if campaign is targeting both Desktops & Mobile phones
+    <br>
+    <% @campaign_criterion.each_key do |campaignId| %>
+    <%=campaignId %><br>
+    <% @campaign_criterion[campaignId.to_i].any? do |b| %>
+    <%= b[:id] == 30000 & 30001 %><br>
+    <%end%>
+     <%end%>
+    
+  
+
+    

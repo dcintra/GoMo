@@ -22,4 +22,5 @@ class CampaignCriterion < ActiveRecord::Base
     end
     return result #we're done with creating the campaigncriterion object
   end
+
 end
