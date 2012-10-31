@@ -32,9 +32,17 @@ This is the name of the platform <br>
     <% @campaign_criterion.each_key do |campaignId| %>
     <%=campaignId %><br>
     <% @campaign_criterion[campaignId.to_i].any? do |b| %>
-    <%= b[:id] == 30000 & 30001 %><br>
+    <% @is_hybrid = b[:id] == 30000 & 30001 %><br>
+    <% if @is_hybrid == true %>
+    <%= "HYBRID CAMPAIN" %>
+    <%end%>
     <%end%>
      <%end%>
+     <br> 
+     <br>
+     <br>
+     <%= @campaign_details %>
+
     
   
 
