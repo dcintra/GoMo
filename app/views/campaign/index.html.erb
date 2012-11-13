@@ -42,6 +42,27 @@ This is the name of the platform <br>
      <br>
      <br>
      <%= @campaign_details %>
+     <br> 
+     <br>
+     <br>
+     <table>
+      <tr>
+        <th>ID
+        <th>Name
+        <th>Status
+        <th>StartDate
+        <th>EndDate
+        <th>Settings
+    <% @campaign_details.each do |id, campaign| %>
+      <tr>
+        <td><%= campaign.id %>
+        <td><%= campaign.name %>
+        <td><%= campaign.status %>
+        <td><%= campaign.startdate%>
+        <td><%= campaign.enddate%>
+        <td><%= campaign.settings.find {|n| n[:positive_geo_target_type]}[:positive_geo_target_type]%>
+    <% end %>
+    </table> 
 
     
   
