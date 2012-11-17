@@ -18,8 +18,9 @@ class CampaignController < ApplicationController
         @campaign_details_count = response[:total_num_entries]
     end
     
-    copy_campaign 
+    copy_campaign_attr
     add_campaigns
+    add_campaign_targeting_criteria
   end
 
   def check_for_hybrid
@@ -52,70 +53,65 @@ class CampaignController < ApplicationController
       })
   end 
   
-  def add_campaign_targeting_criteria(campaign_id)
-    campaign_criterion_srv = adwords.service(:CampaignCriterionService, :v201209) # Create campaign criteria.
-    campaign_criteria = [
-    # Location criteria. The IDs can be found in the documentation or retrieved
-    # with the LocationCriterionService.
-    {:xsi_type => 'Location', :id => 21137}, # California, USA
-    {:xsi_type => 'Location', :id => 2484},  # Mexico
-    # Language criteria. The IDs can be found in the documentation or retrieved
-    # with the ConstantDataService.
-    {:xsi_type => 'Language', :id => 1000},  # English
-    {:xsi_type => 'Language', :id => 1003},  # Spanish
-    # Platform criteria. The IDs can be found in the documentation.
-    {:xsi_type => 'Platform', :id => 30001}, # Mobile
-   ]   
+  def add_campaign_targeting_criteria #add campaign criteria
+    campaign_criterion_srv = @adwords.service(:CampaignCriterionService, :v201209) 
+    campaign_criteria = @campaigncopy_criteria
 
-    # Create operations.
+
     operations = campaign_criteria.map do |criterion|
       {:operator => 'ADD',
        :operand => {
-         :campaign_id => @newcampaign_id, 
+         :campaign_id => @newcampaign_id,
          :criterion => criterion}
       }
     end
 
-   # Add negative campaign criterion.
-   operations << {
-     :operator => 'ADD',
-     :operand => {
-      # The 'xsi_type' field allows you to specify the xsi:type of the object
-      # being created. It's only necessary when you must provide an explicit
-      # type that the client library can't infer.
-      :xsi_type => 'NegativeCampaignCriterion',
-      :campaign_id => campaign_id,
-      :criterion => {
-        :xsi_type => 'Keyword',
-        :text => 'jupiter cruise',
-        :match_type => 'BROAD'
-      }
-     }
-    }
-
     response = campaign_criterion_srv.mutate(operations)
-
-    if response and response[:value]
-    criteria = response[:value]
-    criteria.each do |campaign_criterion|
-      criterion = campaign_criterion[:criterion]
-      puts ("Campaign criterion with campaign ID %d, criterion ID %d and " +
-          "type '%s' was added.") % [campaign_criterion[:campaign_id],
-          criterion[:id], criterion[:criterion_type]]
-    end
-   else
-    puts 'No criteria were returned.'
-   end
   end
 
-  
+  def remove_desktop_tablet
+    campaign_criterion_srv = @adwords.service(:CampaignCriterionService, :v201209) # Create campaign criteria.
+    remove_desktoptablet = [
+      {:xsi_type => 'Platform', :id => 30000},
+      {:xsi_type => 'Platform', :id => 30002},
+    ]
 
-  def add_campaigns()
+    remove_operation = remove_desktoptablet.map do |remove| # remove desktop and tablet targeting
+      {:operator => 'REMOVE',
+        :operand => {
+         :campaign_id => @newcampaign_id,
+         :criterion => remove
+        }
+      }
+    end
+
+    response = campaign_criterion_srv.mutate(remove_operation)
+  end
+
+  def remove_mobile
+    campaign_criterion_srv = @adwords.service(:CampaignCriterionService, :v201209) # Create campaign criteria.
+    remove_mobile = [
+      {:xsi_type => 'Platform', :id => 30001}
+    ]
+
+    remove_operation = remove_mobile.map do |remove| # remove desktop and tablet targeting
+      {:operator => 'REMOVE',
+        :operand => {
+         :campaign_id => @newcampaign_id,
+         :criterion => remove
+        }
+      }
+    end
+
+    response = campaign_criterion_srv.mutate(remove_operation)
+  end
+
+  def add_campaigns
 
    budget_srv = @adwords.service(:BudgetService, :v201209)
    campaign_srv = @adwords.service(:CampaignService, :v201209)
    budget = {
-    :name => 'Sup Budget3',
+    :name => 'Sup Budget4',
     :amount => {:micro_amount => 5000000},
     :delivery_method => 'STANDARD',
     :period => 'DAILY'
@@ -128,7 +124,7 @@ class CampaignController < ApplicationController
 
    # Create campaigns.
    campaigns = [{
-      :name => @campaigncopy_name +"_MobileOnly",
+      :name => @campaigncopy_name +"_MobileOnly2",
       :status => 'PAUSED',
       :bidding_strategy => { :xsi_type => 'ManualCPC'},
       :budget => {:budget_id => budget_id},
@@ -163,7 +159,6 @@ class CampaignController < ApplicationController
     end #add campaign with copied attributes
   end
 
-
   def copy_campaign_attr #copy important campaign attributes: name, status, id, start/enddate, settings, geo-target
     @campaign_details.each do |id, campaign|
       @campaigncopy_name = campaign.name
@@ -174,6 +169,14 @@ class CampaignController < ApplicationController
       @campaigncopy_posgeo = campaign.settings.find {|n| n[:positive_geo_target_type]}[:positive_geo_target_type]
       @campaigncopy_neggeo = campaign.settings.find {|n| n[:positive_geo_target_type]}[:positive_geo_target_type]
     end
+    #copy campaign criteria all locations the previous campaign was targeting, language and platform
+    @campaigncopy_criteria = @campaign_criterion[90823468].select {|f| f[:xsi_type] == "Location"}  
+      @campaigncopy_criteria.each do |n|
+        n.delete_if {|key, value| key == :criterion_type }
+        n.delete_if {|key, value| key == :type }
+      end
+    @campaigncopy_criteria << {:xsi_type => 'Language', :id => 1000}
+    @campaigncopy_criteria << {:xsi_type => 'Platform', :id => 30001}
   end
 
   def update_remove_mobile #update campaign => remove mobile from old campaign
@@ -181,4 +184,5 @@ class CampaignController < ApplicationController
 
   def shared_budget #initiate shared budget
   end
+
 end
